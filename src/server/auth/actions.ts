@@ -17,6 +17,12 @@ import { db } from "~/server/db";
 import { users } from "~/server/db/schema";
 import { headers } from "next/headers";
 
+import { createHash } from "node:crypto";
+
+function sha256Sync(message: string): string {
+  return createHash("sha256").update(message).digest("hex");
+}
+
 export type AuthFormState = {
   error?: string;
   fieldErrors?: Partial<Record<string, string[]>>;
@@ -41,7 +47,7 @@ const registerSchema = z
       .max(128, "Password is too long"),
     confirmPassword: z.string(),
   })
-  .refine((v) => v.password === v.confirmPassword, {
+  .refine((v) => sha256Sync(v.password) === sha256Sync(v.confirmPassword), {
     message: "Passwords do not match",
     path: ["confirmPassword"],
   });
